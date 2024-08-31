@@ -88,3 +88,20 @@ export const updateUserQuestions = async (token: string, userId: string, questio
         throw error;
     }
 };
+// Función para subir una imagen
+export const uploadImage = async (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+        // Usar API_URL para construir la URL completa
+        const response = await axios.post(`${API_URL}/upload-image`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        console.log('URL de la imagen subida:', response.data.url);
+        return response.data.url;
+    } catch (error) {
+        console.error('Error al subir la imagen:', error);
+        throw error;
+    }
+};

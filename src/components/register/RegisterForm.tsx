@@ -4,8 +4,7 @@ import React, { FC, useState } from 'react';
 import { useForm, SubmitHandler } from "react-hook-form";
 import styles from './RegisterForm.module.css';
 import LoginForm from '../login/LoginForm';
-import { registerUser } from '@/services/authService';
-
+import { registerUser, uploadImage } from '@/services/authService';
 
 interface IFormInput {
     username: string;
@@ -21,20 +20,41 @@ interface IFormInput {
         favoritePlace: string;
         favoriteColor: string;
     };
-    image?: FileList;
+    image: FileList;
 }
 
 interface RegisterFormProps {
-    onLoginClick: () => void;  // Definimos la prop onLoginClick
+    onLoginClick: () => void;
 }
 
 const RegisterForm: FC<RegisterFormProps> = ({ onLoginClick }) => {
     const { register, handleSubmit, formState: { errors }, watch } = useForm<IFormInput>();
     const [showLogin, setShowLogin] = useState(false);
+    const [loading, setLoading] = useState(false);
     const formData = watch();
 
     const onSubmit: SubmitHandler<IFormInput> = async (data) => {
+        setLoading(true);
+
         try {
+            let imageUrl = '';
+
+            // Verificar si hay un archivo seleccionado
+            if (data.image && data.image.length > 0) {
+                const imageFile = data.image[0];
+                console.log('Imagen seleccionada:', imageFile);
+
+                // Intentar subir la imagen
+                try {
+                    imageUrl = await uploadImage(imageFile);
+                    console.log('URL de la imagen subida:', imageUrl);
+                } catch (uploadError) {
+                    console.error('Error al subir la imagen:', uploadError);
+                    throw new Error('Error al subir la imagen');
+                }
+            }
+
+            // Preparar los datos del usuario
             const userData = {
                 username: data.username,
                 lastname: data.lastname,
@@ -43,17 +63,19 @@ const RegisterForm: FC<RegisterFormProps> = ({ onLoginClick }) => {
                 email: data.email,
                 password: data.password,
                 questions: data.questions,
-                image: data.image ? data.image[0] : undefined, // Convertir FileList a un archivo individual
+                image: imageUrl,
             };
 
-            const response = await registerUser(userData); // Llamada al servicio de registro
+            // Registrar al usuario
+            const response = await registerUser(userData);
             console.log('Usuario registrado exitosamente:', response);
         } catch (error) {
             console.error('Error al registrar el usuario:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Alternar al formulario de inicio de sesión
     const toggleForm = () => {
         setShowLogin(true);
     };
@@ -200,10 +222,13 @@ const RegisterForm: FC<RegisterFormProps> = ({ onLoginClick }) => {
                         </div>
 
                         <div className={`${styles.fullRow} w-48`}>
-                            <div >
+                            <div>
                                 <input type="submit" value="Unirme a WePlot" className={styles.submitButton} />
                             </div>
                         </div>
+
+                        {loading && <p>Subiendo imagen y registrando usuario...</p>}
+
                         <div className="flex items-center space-x-2">
                             <h1 className="text-black">¿Ya tienes cuenta?</h1>
                             <button
