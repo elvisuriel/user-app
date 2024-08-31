@@ -1,4 +1,6 @@
-import RegisterForm from '@/components/RegisterForm';
+
+import AuthContainer from '@/components/AuthContainer';
+
 import Head from 'next/head';
 
 
@@ -10,7 +12,7 @@ export default function Home() {
         <meta name="description" content="Regístrate en WePlot" />
       </Head>
       <div className="container">
-        <RegisterForm />
+        <AuthContainer />
       </div>
     </>
   );
